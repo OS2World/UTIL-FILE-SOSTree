@@ -1,0 +1,59 @@
+ps
+
+Description
+
+    ps--display processes with their process id's (PID), parent process
+    id's (PPID), and session id's (SID).
+
+Usage
+
+    [D:\] ps
+
+    ps output looks like this:
+
+        PID  PPID   SID  PROCESS
+          3     1     1  d:\os2\pmshell.exe
+          7     3    18  d:\bin\pc2\pc2.exe
+          6     3    17  d:\bin\xfeel.exe
+          5     3    16  d:\os2\pmshell.exe
+          4     3     0  d:\os2\system\harderr.exe
+
+    All the numeric values are decimals. If you want hexadecimals, just
+    remove all calls to Format() and X2D() in lines 24--26 of `ps.cmd';
+    ie. change
+
+        pid = Format(X2D(Word(line, 1)), 4)
+
+    to
+
+        pid = Word(line, 1)
+
+    You may have to reformat the header line to get the columns right.
+
+System requirements
+
+    ps is a REXX program and requires you to have REXX installed. Also,
+    ps calls PSTAT to obtain the information, and only re-formats the
+    output to a more readable and at least shorter format. PSTAT is part
+    of the OS/2 Diagnostic Tools installation options; if you don't have
+    the file `pstat.exe' in your \OS2 directory, use the Selective
+    Install object in your System folder to install it. REXX can be
+    installed in the same way, in the unlikely case you haven't it
+    installed already.
+
+    `rxqueue.exe' should also be found in the \OS2 directory. It is part
+    of the REXX installation option.
+
+Notes
+
+    It took a long while before I found out how to pipe output to REXX
+    routines inside a REXX program. Maybe there are even better altern-
+    atives than the `rxqueue' method this program uses, but none of them
+    is documented in the standard OS/2 package. I really wish IBM would
+    some day give a full, decent documentation FREE with the OS/2
+    system...
+
+Version
+
+    ps.cmd v4.0
+    Copyright (C) SuperOscar Softwares, Tommi Nieminen 1993

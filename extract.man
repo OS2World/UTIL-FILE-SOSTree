@@ -1,0 +1,97 @@
+Extract
+
+Description
+
+    Extract--extract files from archives or list archive contents.
+    A REXX script.
+
+Usage
+
+    [D:\] extract ARCHIVE [ FILE ... ] [ /jlp? /t DIR ]
+
+    Options:
+
+    /j      Junk directories (ie. don't extract them). With this
+            switch, files are extracted to the current directory, or
+            the directory given with /t switch. Can't be used together
+            with /l or /p.
+
+    /l      Show archive contents. Output goes to stdout. Can't be
+            used together with /l, /p, or /t.
+
+    /p      Extract to stdout. Useful in viewing document files stored
+            in the archive.
+
+    /t DIR
+            Set directory in which files are extracted. Without the /j
+            switches, any subdirectories contained in the archive file
+            will be created under DIR. The space between the switch
+            and the directory name isn't necessary.
+
+    /?      Display help page and quit.
+
+
+    NOTE: Extract only chooses the appropriate archiver and forms the
+    command line which is passed to it; you will still need all the
+    archivers whose archive files you encounter. However, Extract
+    makes working with the archivers much more comfortable since you
+    don't need to remember every switch of every program (or indeed,
+    remember the actual executable names of the archives). It also
+    makes it possible to put the archivers to a directory not con-
+    tained in PATH--just edit the line "arcdir=..." in extract.cmd
+    to point to your archiver directory.
+
+Examples
+
+    Suppose you have a file `foo.zoo', which includes the follow-
+    ing files (and subdirectories):
+
+        src\foo.c       (*
+        src\foo.h
+        src\foo.mak
+        exe\foo.exe
+        man\foo.man
+        README
+        Copyright
+            -------
+            *) Note: Zoo, Zip, gzip, tar and Compress use slashes
+            instead of backslashes internally to separate directories,
+            but in the command line of Extract you should use back-
+            slashes--otherwise you'll get silly messages of unknown
+            switches...
+
+    Extract all the files:
+
+        [D:\] extract foo.zoo
+
+    Extract all the files in `src' subdirectory (ie. `foo.c', `foo.h',
+    and `foo.mak'):
+
+        [D:\] extract foo.zoo src\*
+
+    The same as above, but do not create `src' subdirectory, ie.
+    extract files to the current directory:
+
+        [D:\] extract foo.zoo src\* /j
+
+    The same as above, but extract to `C:\tmp\thrash' directory:
+
+        [D:\] extract foo.zoo src\* /j /t C:\tmp\thrash
+
+    To list the contents of this archive, use:
+
+        [D:\] extract foo.zoo /l
+
+    To view the `README' file with `more', use:
+
+        [D:\] extract foo.zoo README /p |more
+
+    To redirect `README' to printer:
+
+        [D:\] extract foo.zoo README /p >prn
+
+Version and copyright
+
+    Extract v1.0
+    Copyrigth (C) 1993, SuperOscar Softwares, Tommi Nieminen.
+

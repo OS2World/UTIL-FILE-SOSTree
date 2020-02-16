@@ -1,0 +1,63 @@
+FileFind
+
+Description
+
+    FileFind--whereis-like find file utility written completely in
+    REXX.
+
+Usage
+
+    [D:\] filefind [PATH\]FILENAME ... [ /h /b /? ]
+
+    FileFind finds files under PATH if that is specified, or the
+    current directory (= `.') if it isn't. Multiple command line
+    arguments are allowed.
+
+    Options:
+
+    /h      find hidden and system files too
+    /n      brief format: display only file names
+    /?      display help page and quit
+
+Examples
+
+    Note the prompt (ie. current directory info) in the following
+    examples!
+
+    [D:\os2] filefind *.inf
+        ; Finds all *.inf files under D:\os2
+
+    [D:\] filefind \os2\*.inf
+        ; Does the same as the preceding
+
+    [D:\] filefind c:\bin\*.exe
+        ; Finds all *.exe files under C:\bin
+
+    [D:\os2] filefind DLL\*.inf apps\*.inf
+        ; Finds all *.inf files under D:\os2\DLL and D:\os2\apps
+
+Note
+
+    FileFind displays file dates and times in the national format,
+    which is found with a SysIni() call to `os2.ini'. However, this
+    seems to be causing troubles now and then--sometimes SysIni()
+    returns insane results, like `0' as the date or time separator.
+    IF YOU ARE HAVING PROBLEMS WITH THIS, remove all date and time
+    formatting lines from the program, and change the following
+    line:
+
+        ok = SysFileTree(Word(find, i), files, "fst", "*--*-")
+
+    to
+
+        ok = SysFileTree(Word(find, i), files, "fs", "*--*-")
+
+    filefind will then display dates and times in the American
+    formats (MM/DD/YY and HH:MM{am|pm}, respectively) which are
+    insane but work fine.
+
+Version
+
+    FileFind v1.4
+    Copyright (C) SuperOscar Softwares, Tommi Nieminen 1993
+
