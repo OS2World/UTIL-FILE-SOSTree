@@ -1,0 +1,55 @@
+kill
+
+Description
+
+    kill--kill processes by their process ID's (PID).
+
+Usage
+
+    [D:\] kill PID [ ... ]
+
+    The arguments are given in decimals.
+
+System requirements
+
+    `kill' is a Perl program and requires you to have Perl installed.
+    Perl is a programming language which originally was designed for
+    UNIX (how else) but is now ported for many other operating systems.
+    Perl should be find by anonymous FTP'ing to one of the following
+    places:
+
+        hobbes.nmsu.edu
+        ftp.cdrom.com
+        ftp.luth.se
+        ftp.informatik.tu-muenchen.de
+        ftp.urz.uni-heidelberg.de
+
+    and possibly many others. Try directories like
+
+        .../os2/2_x/programming                or
+        .../os2/2_x/unix/programming
+
+    and search for files starting `perl'.
+
+Notes
+
+    If you are using an aliasing shell like 4OS2, this script should be
+    easy to convert to an alias. For example, when using 4OS2, put the
+    line
+
+        KILL=perl -e "kill(9, %$);"
+
+    in your alias file, or type
+
+        [D:\] alias kill=`perl -e "kill(9, %$);"`
+
+    at the command line.
+
+    I haven't yet figured out how command line can be passed to sh
+    (ms_sh 2.1C). The easiest solution (using `$*') doesn't seem to
+    work.
+
+Version
+
+    kill v1.0
+    Copyright (C) SuperOscar Softwares, Tommi Nieminen 1993

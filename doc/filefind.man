@@ -58,6 +58,6 @@ Note
 
 Version
 
-    FileFind v1.4
+    FileFind v1.4a
     Copyright (C) SuperOscar Softwares, Tommi Nieminen 1993
 

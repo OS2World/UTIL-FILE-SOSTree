@@ -5,8 +5,12 @@
  * Programming language: Borland C++ for OS/2 1.0.
  * Programmer: Tommi Nieminen.
  *
- * 4-Jul-1993   v1.0: first PD version ready.
+ * Spanish and Catalan messages by Xavier Caballen.
  *
+ * 4-Jul-1993   v1.0: first PD version ready.
+ * 19-Oct-1993  v1.0a: different internal structure--the code should now
+ *              be easier to translate. Spanish and Catalan translations
+ *              by Xavier Caballe.
  */
 
 #include <stdio.h>              /* Standard I/O */
@@ -19,8 +23,18 @@
 #define INCL_DOSNLS
 #include <os2.h>                /* Load NLS support */
 
+#if defined(LANG_SUOMI)
+#include "msg_suomi.inc"        /* Finnish */
+#elif defined(LANG_ESPANOL)
+#include "msg_espanol.inc"      /* Spanish */
+#elif defined(LANG_CATALA)
+#include "msg_catala.inc"       /* Catalan */
+#else
+#include "msg_english.inc"      /* English (default) */
+#endif
+
   /* Official program name string for messages */
-const char *program_name = "SOS Tree v1.0";
+const char *program_name = "SOS Tree v1.0a";
 const char *copyright = "(C) SuperOscar Softwares, Tommi Nieminen 1993";
 
   /* Program flags */
@@ -41,27 +55,6 @@ typedef enum {
     ERR_CMDLINE_SYNTAX,
     ERR_INTERNAL
 } ERROR;
-
-  /* Error messages */
-const char *errormsg[] = {
-#if defined(LANG_SUOMI)
-    "Polkua \"%s\" ei l”ydy",
-    "Tuntematon valitsin \"-%c\"",
-    "Virheellinen komentorivi (\"-?\" antaa apua)",
-    "Sis„inen ohjelmavirhe"
-#else
-    "Path not found \"%s\"",
-    "Unknown switch \"-%c\"",
-    "Invalid command line syntax (use \"-?\" to get help)",
-    "Program internal error"
-#endif
-};
-
-#if defined(LANG_SUOMI)
-const char *header_line = "Hakemistopuu \"%s\"\n";
-#else
-const char *header_line = "Directory tree of \"%s\"\n";
-#endif
 
   /* Global variables */
 ERROR status = NO_ERROR;                /* Global error status */
@@ -380,30 +373,9 @@ void error_raise(ERROR err, ...)
 void help(void)
   /* Display help text. */
 {
+    int i;
+
     printf("%s %s\n\n", program_name, copyright);
-#if defined(LANG_SUOMI)
-    puts("N„yt„ hakemistorakenne kaaviona tai luettelona. K„ytt”:");
-    puts("\n    [D:\\] sostree [ -adfhnqz | -? ] [ HAK ]\n");
-    puts("Valitsimien merkitykset ovat seuraavat:");
-    puts("    -a  N„yt„ my”s tiedostom„„reet.");
-    puts("    -d  N„yt„ my”s p„iv„ykset ja ajat.");
-    puts("    -f  N„yt„ my”s tiedostot (lehtin„).");
-    puts("    -h  N„yt„ my”s piilotetut ja j„rjestelm„tiedostot.");
-    puts("    -n  N„yt„ t„ydet polkunimet puukaaviotta.");
-    puts("    -q  Žl„ n„yt„ \"Hakemistopuu ...\" -tunnisterivi„.");
-    puts("    -z  N„yt„ my”s tiedostojen koot.\n");
-    puts("    -?  N„yt„ t„m„ avustusn„ytt”.");
-#else
-    puts("Display directory tree with or without graphics. Usage:");
-    puts("\n    [D:\\] sostree [ -adfhnqz | -? ] [ DIR ]\n");
-    puts("The meanings of the switches are the following:");
-    puts("    -a  Show file attributes too.");
-    puts("    -d  Show file dates and times too.");
-    puts("    -f  Show files also (as leaves).");
-    puts("    -h  Show hidden and system files too.");
-    puts("    -n  Show full path names without graphics.");
-    puts("    -q  Do not show \"Directory tree of ...\" header.");
-    puts("    -z  Show file sizes too.\n");
-    puts("    -?  Show this help screen.");
-#endif
+    for (i = 0; i < HELP_SCREEN_HEIGHT; puts(helpmsg[i ++]))
+        ;
 }

@@ -6,14 +6,20 @@
  * attribute.
  *
  * Usage:
- *      [D:\] chname FILE ... [ /f /h /q ]
+ *      [D:\] chname FILE ... [ /f /h /q /x /? ]
  *
  * Switches:
- *      /f  HPFS to FAT (default)
- *      /h  FAT to HPFS
- *      /q  quiet mode
+ *      /f      HPFS to FAT (default)
+ *      /h      FAT to HPFS
+ *      /q      Quiet mode: no output
+ *      /x      Send output to OS2QUE instead of standard output
+ *      /?      Show help page and quit.
  *
  * 20-Aug-1993  v1.0: first PD version.
+ * 28-Aug-1993  v1.1: Options /q and /x implemented. Structural changes.
+ * 4-Oct-1993   v1.1a: fixes in the help page and messages.
+ * 5-Oct-1993   v1.1b: /f and /h cannot be used simultaneously; neither
+ *              can /q and /x.
  */
 
 "@echo off"
@@ -23,7 +29,7 @@ Parse Arg files "/"switches
 Signal On Halt Name Quit
 
   /* Program name and version */
-program_name = "ChName v1.0"
+prgname = "ChName v1.1b"
 
   /* Constants */
 TRUE = 1
@@ -36,28 +42,54 @@ Call RxFuncAdd "SysGetEA", "RexxUtil", "SysGetEA"
 
   /* Defaults */
 hpfs2fat = TRUE
-quiet = FALSE
+verbose = 1             /* 0=quiet, 1=stdout, 2=OS2QUE */
 
   /* Check switches */
 If switches <> "" Then Do
+      /* Convert to upper case */
+    switches = Translate(switches)
+
+      /* Separators to blanks */
     switches = Translate(switches, " ", "/")
+
     Do i = 1 To Length(switches)
-        ch = Translate(SubStr(switches, i, 1))
+        ch = SubStr(switches, i, 1)
         Select
-            When ch == " " | ch == "/" Then Iterate
-            When ch == "F" Then Iterate
-            When ch == "H" Then hpfs2fat = FALSE
-            When ch == "Q" Then quiet = TRUE
-            When ch == "?" Then Call ShowHelp
-            Otherwise Call Error "invalid switch '"ch"' (use /? for help)"
+            When ch == " " Then
+                Iterate
+
+            When ch == "F" Then
+                hpfs2fat = TRUE
+
+            When ch == "H" Then
+                hpfs2fat = FALSE
+
+            When ch == "Q" Then
+                verbose = 0
+
+            When ch == "X" Then
+                verbose = 2
+
+            When ch == "?" Then
+                Call ShowHelp
+
+            Otherwise
+                Call Error "invalid switch '"ch"' (use /? to get help)"
         End
     End
 End
 
+  /* Aha, you tried to fool me! */
+If Pos("F", switches) > 0 & Pos("H", switches) > 0 Then
+    Call Error "/f and /h switches cannot be used simultaneously"
+If Pos("Q", switches) > 0 & Pos("X", switches) > 0 Then
+    Call Error "/q and /x switches cannot be used simultaneously"
+
   /* If there are no file parameters, and we haven't yet encountered
    * /? switch, an error situation results.
    */
-If files == "" Then Call Error "no files specified"
+If files == "" Then
+    Call Error "no files specified (use /? to get help)"
 
 Do i = 1 To Words(files)
     mask = Word(files, i)
@@ -85,34 +117,40 @@ Do i = 1 To Words(files)
 
           /* Check whether file exists */
         If Stream(file, "c", "query exists") == "" Then Do
-            Say program_name": File '"file"' not found"
+            Say prgname": File '"file"' not found"
             Iterate
         End
 
+          /* Compose a new name */
         If hpfs2fat == TRUE Then Do
             newname = Hpfs2Fat(file)
-            If file <> newname Then Do
-                Say file "->" newname
-                'ren "'file'"' newname '>nul'
-                res = SysPutEA(newname, ".LONGNAME", file)
-            End
+            If newname == file Then Iterate
+              /* Save the name in EAs */
+            res = SysPutEA(file, ".LONGNAME", file)
         End
         Else Do
-            res = SysGetEA(file, ".LONGNAME", "newname")
-            If res == 0 & newname <> "" & file <> newname Then Do
-                Say file "->" newname
-                'ren' file '"'newname'" >nul'
-            End
+            res = SysGetEA(file, ".LONGNAME", newname)
+            If res <> 0 | newname == file | newname == "" Then Iterate
         End
-    End
 
+          /* Show changes unless /q is specified; if /x is specified,
+           * send the display to a queue.
+           */
+        If queout == TRUE Then
+            Queue file "->" newname
+        Else If quiet == FALSE Then
+            Say file "->" newname
+
+          /* Rename file */
+        'ren "'file'" "'newname'" >nul'
+    End
 End
 
 Quit:
     Exit 0
 
   /* Change HPFS names to FAT format */
-Hpfs2Fat: Procedure Expose program_name
+Hpfs2Fat: Procedure Expose prgname
     Parse Arg pathname
 
     name = pathname
@@ -157,27 +195,29 @@ Hpfs2Fat: Procedure Expose program_name
 
 Return Translate(result)
 
-ShowHelp: Procedure Expose program_name
-    Say program_name "(C) SuperOscar Softwares, Tommi Nieminen 1993."
+ShowHelp: Procedure Expose prgname
+    Say prgname "(C) SuperOscar Softwares, Tommi Nieminen 1993."
     Say
-    Say "    [D:\] chname FILE ... [ /f /h /q ]"
+    Say "    [D:\] chname FILE ... [ /f /h /q /x /? ]"
     Say
     Say "Change long HPFS file names to FAT format or vice versa. When long"
     Say "HPFS file names are truncated to FAT format, long name is saved to"
     Say "`.LONGNAME'  extended  attribute,  and  the  resulting file can be"
     Say "copied to a FAT drive with the standard OS/2 copying commands."
     Say
-    Say "With the /h switch,  file names formerly truncated formerly to FAT"
-    Say "format can be restored."
+    Say "With the  /h  switch,  file names formerly truncated to FAT format"
+    Say "can be restored."
     Say
     Say "Switches:"
     Say "    /f  HPFS to FAT (default)"
     Say "    /h  FAT to HPFS (reversal of /f)"
     Say "    /q  Quiet mode"
+    Say "    /x  Send output to OS2QUE instead of standard output"
+    Say "    /?  Show this help page and quit"
 Exit 0
 
-Error: Procedure Expose program_name
+Error: Procedure Expose prgname
     Parse Arg errormsg
 
-    Say program_name":" errormsg
+    Say prgname":" errormsg
 Exit 1

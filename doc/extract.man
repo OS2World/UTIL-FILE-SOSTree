@@ -36,45 +36,54 @@ Usage
     archivers whose archive files you encounter. However, Extract
     makes working with the archivers much more comfortable since you
     don't need to remember every switch of every program (or indeed,
-    remember the actual executable names of the archives). It also
-    makes it possible to put the archivers to a directory not con-
-    tained in PATH--just edit the line "arcdir=..." in extract.cmd
-    to point to your archiver directory.
+    remember the actual executable names of the archives).
+
+Note
+
+    If you do not want to keep your archiver executables in PATH, you
+    can modify the line
+
+        arcdir = ""
+
+    in `extract.cmd' to point to the directory where you keep them.
+    The value MUST have a trailing backslash (eg. "C:\Bin\Arc\"). If
+    the string is empty, a normal PATH search is done.
 
 Examples
 
-    Suppose you have a file `foo.zoo', which includes the follow-
-    ing files (and subdirectories):
+    Suppose you have a file `foo.zoo', which includes the following
+    files (and subdirectories):
 
-        src\foo.c       (*
+        src\foo.c
         src\foo.h
         src\foo.mak
         exe\foo.exe
         man\foo.man
         README
         Copyright
-            -------
-            *) Note: Zoo, Zip, gzip, tar and Compress use slashes
-            instead of backslashes internally to separate directories,
-            but in the command line of Extract you should use back-
-            slashes--otherwise you'll get silly messages of unknown
-            switches...
 
-    Extract all the files:
+    Note: Zoo, Zip, gzip, tar and Compress use slashes instead of
+    backslashes internally to separate directories, but in the command
+    line of Extract you should use backslashes--otherwise you'll get
+    silly messages of unknown switches...
+
+    To extract all the files:
 
         [D:\] extract foo.zoo
 
     Extract all the files in `src' subdirectory (ie. `foo.c', `foo.h',
-    and `foo.mak'):
+    and `foo.mak'); this also makes the subdirectory `src', it it
+    didn't exist already:
 
         [D:\] extract foo.zoo src\*
 
-    The same as above, but do not create `src' subdirectory, ie.
-    extract files to the current directory:
+    The same as above, but doesn't create `src' subdirectory, ie.
+    files are extracted to the current directory:
 
         [D:\] extract foo.zoo src\* /j
 
-    The same as above, but extract to `C:\tmp\thrash' directory:
+    The same as above, but files are extracted to `C:\tmp\thrash'
+    directory:
 
         [D:\] extract foo.zoo src\* /j /t C:\tmp\thrash
 
@@ -92,6 +101,5 @@ Examples
 
 Version and copyright
 
-    Extract v1.0
+    Extract v1.1
     Copyrigth (C) 1993, SuperOscar Softwares, Tommi Nieminen.
-

@@ -1,0 +1,91 @@
+ChName
+
+Description
+
+    Change long HPFS file names to FAT format  and  vice  versa.  Useful
+    when copying files to or from diskettes.
+
+Usage
+
+    [D:\] chname FILE ... [ /f /h /q /x /? ]
+
+    /f  HPFS to FAT (default)
+    /h  FAT to HPFS (ie. reverse what was done with /f)
+    /q  Quiet mode
+    /x  Send output to a REXX queue instead of standard output
+    /?  Show help page and quit
+
+    ChName changes HPFS file names to FAT format or vice versa.
+
+
+    HOW IT'S DONE
+
+    When  changing  HPFS names to FAT, the program first simply tries to
+    truncate the name to the `????????.???'  mask.  Spaces are converted
+    to underlines, and the first and the last dot-separated part are put
+    together. For example,
+
+        "What really happened to Baby Jane.txt.Z" -> WHAT_REA.Z
+
+    If there already is a file with the same name, a part of the result-
+    ing  name  is  substituted with a number, eg. `WHAT_RE0.Z'.  Only as
+    many letters are substituted as necessary--first one number is tried
+    (0..9),  then two numbers  (00..99)  and so on.  Eventually a unique
+    file name is very probably found.
+
+    The long HPFS file name is saved to the `.LONGNAME' extended attrib-
+    ute so that the name can later be restored with the `/h' switch, eg.
+
+        WHAT_REA.Z -> "What really happened to Baby Jane.txt.Z"
+
+
+    USING REXX QUEUES
+
+    The /x switch is designed to be a helpful addition for REXX program-
+    mers. With it, the output of ChName (ie. the old file names, whether
+    long or short,  and corresponding new names)  can be easily fetched.
+    For  example,  the  following  program  saves  all the long names to
+    `long_name'  stem  variable,   and   corresponding  short  names  to
+    `short_name' stem.
+
+        /* example.cmd */
+
+        "@echo off"
+        Parse Arg list
+
+        n = 1
+        Do i = 1 To Words(list)
+            file = Word(list, i)
+            Call ChName file "/f /x"
+            Do While Queued() > 0
+                Parse Pull long " -> " short
+                long_name.n = long
+                short_name.n = short
+                n = n + 1
+            End
+        End
+
+Known Bugs
+
+    Spaces in file names cannot be handled  from  the command line,  ie.
+    you cannot use ChName like this:
+
+        [D:\] chname "What really happened to Baby Jane.txt.Z"
+
+    Because OS/2 seems to strip the quotes before anything reaches REXX,
+    ChName gives you a list of silly messages about files not found:
+
+        ChName v1.0: File 'What' not found
+        ChName v1.0: File 'really' not found
+        ...
+
+    But spaces ARE still allowed in  file names,  so  the  following  is
+    possible even if the  `*.txt.Z'  mask matched also files with spaces
+    in their names:
+
+        [D:\] chname *.txt.Z
+
+Version and Copyrights
+
+    ChName v1.1b
+    (C) SuperOscar Softwares, Tommi Nieminen

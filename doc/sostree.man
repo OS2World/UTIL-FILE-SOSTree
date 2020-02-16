@@ -1,0 +1,80 @@
+SOS Tree
+
+Description
+
+    SOS Tree--directory tree drawer for OS/2.
+
+Usage
+
+    [D:\] sostree [ -adfnqz ] PATH
+
+    Options:
+
+    -a      Display file attributes in the format "ADHRS"
+    -d      Display dates and times too (in current national format).
+    -f      Include plain files too in the listing.
+    -n      List all directories (or all files and directories with -f
+            option) with full path names; do not draw the tree graph.
+    -q      Don't display the "Directory tree of ..." header.
+    -z      Display file sizes too. This switch is meaningless if -f
+            isn't used simultaneously.
+
+Note
+
+    This program is public domain. Copyrights are there only to show
+    who first wrote this program.
+
+Note of re-compiling
+
+    I have tried to make SOS Tree as easy to be translated to other
+    languages as possible, but without the IBM `mkmsgf' utility I'm
+    forced to use different methods than the handy `.msg' system
+    OS/2 makes possible. However, it should still be easy to make
+    other-language versions of the program. From version 1.0a onwards,
+    there are several conditional `#include' clauses after the
+    standard header files have been included (file `sostree.c', line
+    24 fw.):
+
+        #if defined(LANG_SUOMI)
+        #include "msg_suomi.inc"
+        ...
+        #else
+        #include "msg_english.inc"      /* The default */
+        #endif
+
+    Currently SOS Tree is translated to four languages. English is the
+    default--ie. the one you get with plain `bcc sostree.c'. By setting
+    one of the following symbolic constants, you can get a different-
+    language version:
+
+        SYMBOLIC CONSTANT       LANGUAGE
+        ------------------------------------
+        LANG_CATALA             Catalan
+        LANG_ENGLISH            English
+        LANG_ESPANOL            Spanish
+        LANG_SUOMI              Finnish
+
+    For example, to get the Finnish messages:
+
+        [D:\] bcc -DLANG_SUOMI sostree.c
+
+    To create a custom message file, examine `msg_english.inc', create
+    a similar one with all the English messages translated, and add an
+    `#elif' clause to the source code:
+
+        #if defined(LANG_SUOMI)
+        #include "msg_suomi.h"
+        #elif defined(LANG_ESPERANTO)
+        #include "msg_esperanto.h"
+        ...
+        #else
+        #include "msg_english.h"
+        #endif
+
+    Please keep English as the default language (ie. the last one in
+    the list). And PLEASE send your translation to me, so that I can
+    make it an `official' part of the next version of SOS Tree.
+
+Version
+
+    SOS Tree v1.0a (C) SuperOscar Softwares, 1993.

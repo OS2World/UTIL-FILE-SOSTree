@@ -1,0 +1,644 @@
+\input texinfo @c -*- texinfo -*-
+
+@setfilename sosutil.info
+@settitle SOS Utilities version 1.2
+
+@iftex
+@afourpaper
+@end iftex
+
+@node Top, AskName, ,
+@chapter SOS Utilities overview
+
+This file documents SOS Utilities version 1.2, a collection of small
+command-line utilities for OS/2.
+
+Copyright @copyright{} 1993, SuperOscar Softwares, Tommi Nieminen.
+
+@menu
+* Permissions::
+* ChName::
+* Extract::
+* FileFind::
+* kill::
+* ps::
+* SOS Tree::
+* Version and copyrights::
+@end menu
+
+@node Permissions, ChName, Top, Top
+@chapter Permissions
+
+Permission is granted to make and distribute verbatim copies of
+this manual provided the copyright notice and this permission notice
+are preserved on all copies.
+
+Permission is granted to process this file through TeX and print the
+results, provided the printed document carries copying permission
+notice identical to this one except for the removal of this paragraph
+(this paragraph not being relevant to the printed manual).
+
+Permission is granted to copy and distribute modified versions of this
+manual under the conditions for verbatim copying, provided that the entire
+resulting derived work is distributed under the terms of a permission
+notice identical to this one.
+
+Permission is granted to copy and distribute translations of this manual
+into another language, under the above conditions for modified versions,
+except that this permission notice may be stated in a translation approved
+by the Free Software Foundation.
+SOS Utilities is a collection of small useful utilities written in REXX, the
+OS/2 batch file processing language. Also included is SOS Tree, a utility
+for displaying the directory tree.
+
+@node ChName, Extract, Permissions, Top
+@chapter @code{ChName}---file name modifier
+
+@code{ChName} changes long HPFS file names to FAT format and vice versa.
+It is a useful tool when copying files to or from diskettes.
+
+@menu
+* ChName usage::
+* How it's done::
+* Using REXX queues::
+* Known bugs::
+@end menu
+
+@node ChName usage, How it's done, ChName, ChName
+@section @code{ChName} usage
+
+    @example
+    [D:\] chname @var{FILE} @dots{} [ /f /h /q /x /? ]
+    @end example
+
+@table @samp
+@item /f
+HPFS to FAT (default)
+@item /h
+FAT to HPFS (ie. reverse what was done with /f)
+@item /q
+Quiet mode
+@item /x
+Send output to a REXX queue instead of standard output
+@item /?
+Show help page and quit
+@end table
+
+@node How it's done, Using REXX queues, ChName usage, ChName
+@section How it's done
+
+When changing HPFS names to FAT, the program first simply tries to
+truncate the name to the @samp{????????.???} mask. Spaces are converted
+to underlines, and the first and the last dot-separated part are put
+together. For example,
+
+    @example
+    "What ever happened to Baby Jane.txt.Z" -> WHAT_EVE.Z
+    @end example
+
+If there already is a file with the same name, a part of the resulting
+name is substituted with a number, eg. @samp{WHAT_EV0.Z}. Only as
+many letters are substituted as necessary---first one number is tried
+(@samp{0@dots{}9}), then two numbers (@samp{00@dots{}99}) and so on.
+Eventually a unique file name is very probably found.
+
+The long HPFS file name is saved to the @samp{.LONGNAME} extended
+attribute so that the name can later be restored with the `/h' switch,
+eg.
+
+    @example
+    WHAT_E00.Z -> "What ever happened to Baby Jane.txt.Z"
+    @end example
+
+@node Using REXX queues, Known bugs, How it's done, ChName
+@section Using REXX queues
+
+The @samp{/x} switch is designed to be a helpful addition for REXX
+programmers. With it, the output of ChName (ie. the old file names,
+whether long or short, and corresponding new names)  can be easily
+fetched. For example, the following program saves all the long names to
+@code{long_name} stem variable, and corresponding short names to
+@code{short_name} stem.
+
+    @example
+    /* example.cmd */
+
+    "@@echo off"
+    Parse Arg list
+
+    n = 1
+    Do i = 1 To Words(list)
+        file = Word(list, i)
+        Call ChName file "/f /x"
+        Do While Queued() > 0
+            Parse Pull long " -> " short
+            long_name.n = long
+            short_name.n = short
+            n = n + 1
+        End
+    End
+    @end example
+
+@node Known bugs, , Using REXX queues, ChName
+@section Known bugs
+
+Spaces in file names cannot be handled from the command line, ie. you
+cannot use @code{ChName} like this:
+
+    @example
+    [D:\] chname "What really happened to Baby Jane.txt.Z"
+    @end example
+
+Because OS/2 seems to strip the quotes before anything reaches REXX,
+@code{ChName} gives you a list of silly messages about files not found:
+
+    @example
+    ChName v1.1: File 'What' not found
+    ChName v1.1: File 'really' not found
+    @dots{}
+    @end example
+
+But spaces @b{are} still allowed in file names, so the following is
+possible even if the @samp{*.txt.Z} mask matched also files with spaces
+in their names:
+
+    @example
+    [D:\] chname *.txt.Z
+    @end example
+
+@node Extract, FileFind, ChName, Top
+@chapter @code{Extract}
+
+@code{Extract}---extract files from archives or list archive contents.  A
+REXX script.
+
+@b{Note:} @code{Extract} only chooses the appropriate archiver and forms
+the command line which is passed to it; you will still need all the
+archivers whose archive files you encounter. However, @code{Extract}
+makes working with the archivers much more comfortable since you don't
+need to remember every switch of every program (or indeed, remember the
+actual executable names of the archives). It also makes it possible to
+put the archivers to a directory not contained in @samp{PATH}---just edit
+the line @code{arcdir=@dots{}} in @samp{extract.cmd} to point to your
+archiver directory.
+
+@menu
+* Extract usage::
+* Extract examples::
+@end menu
+
+@node Extract usage, Extract examples, Extract, Extract
+@section @code{Extract} usage
+
+    @example
+    [D:\] extract @var{ARCHIVE} [ @var{FILE} @dots{} ] [ /jlp? /t @var{DIR} ]
+    @end example
+
+@table @samp
+@item /j
+Junk directories (ie. don't extract them). With this switch, files are
+extracted to the current directory, or the directory given with @samp{/t}
+switch. Can't be used together with @samp{/l} or @samp{/p}.
+
+@item /l
+Show archive contents. Output goes to stdout. Can't be used together with
+@samp{/l}, @samp{/p}, or @samp{/t}.
+
+@item /p
+Extract to stdout. Useful in viewing document files stored in the
+archive.
+
+@item /t @var{DIR}
+Set directory in which files are extracted. Without the @samp{/j}
+switches, any subdirectories contained in the archive file will be
+created under @var{DIR}. The space between the switch and the directory
+name isn't necessary.
+
+@item /?
+Display help page and quit.
+
+@end table
+
+@node Extract examples, , Extract usage, Extract
+@section Examples of @code{Extract} usage
+
+Suppose you have a file @samp{foo.zoo}, which includes the following
+files (and subdirectories):@footnote{@code{Zoo}, @code{Zip}, @code{gzip},
+@code{tar} and @code{Compress} use slashes instead of backslashes
+internally to separate directories, but in the command line of
+@code{Extract} you should use backslashes---otherwise you'll get silly
+messages of unknown switches@dots{}}
+
+    @example
+    src\foo.c
+    src\foo.h
+    src\foo.mak
+    exe\foo.exe
+    man\foo.man
+    README
+    Copyright
+    @end example
+
+@noindent
+To extract all the files, use
+
+    @example
+    [D:\] extract foo.zoo
+    @end example
+
+@noindent
+To extract all the files in @samp{src} subdirectory (ie. @samp{foo.c},
+@samp{foo.h}, and @samp{foo.mak}):
+
+    @example
+    [D:\] extract foo.zoo src\*
+    @end example
+
+@noindent
+The same as above, but do not create @samp{src} subdirectory, ie.
+extract files to the current directory:
+
+    @example
+    [D:\] extract foo.zoo src\* /j
+    @end example
+
+@noindent
+The same as above, but extract to @samp{C:\tmp\thrash} directory:
+
+    @example
+    [D:\] extract foo.zoo src\* /j /t C:\tmp\thrash
+    @end example
+
+@noindent
+To list the contents of this archive, use:
+
+    @example
+    [D:\] extract foo.zoo /l
+    @end example
+
+@noindent
+To view the @samp{README} file with @samp{more}, use:
+
+    @example
+    [D:\] extract foo.zoo README /p |more
+    @end example
+
+@noindent
+To redirect @samp{README} to printer:
+
+    @example
+    [D:\] extract foo.zoo README /p >prn
+    @end example
+
+@node FileFind, kill, Extract, Top
+@chapter FileFind
+
+FileFind---@code{whereis}-like find file utility written completely in
+REXX.
+
+@menu
+* FileFind usage::
+* FileFind examples::
+* Warning::
+@end menu
+
+@node FileFind usage, FileFind examples, FileFind, FileFind
+@section @code{FileFind} usage
+
+    @example
+    [D:\] filefind [@var{PATH}\]@var{FILENAME} @dots{} [ /h /n /? ]
+    @end example
+
+@code{FileFind} finds files under @var{PATH} if that is specified, or the
+current directory (= @samp{.}) if it isn't. Multiple command line
+arguments are allowed.
+
+@table @samp
+@item /h
+find hidden and system files too
+@item /n
+brief format: display only file names
+@item /?
+display help page and quit
+@end table
+
+@node FileFind examples, Warning, FileFind usage, FileFind
+@section Examples of @code{FileFind} usage
+
+Note the prompt (ie. current directory info) in the following examples!
+
+@noindent
+Find all @samp{*.inf} files under @samp{D:\OS2}
+
+    @example
+    [D:\OS2] filefind *.inf
+    @end example
+
+@noindent
+The same as preceding, but note that the current directory is now
+different:
+
+    @example
+    [D:\] filefind \OS2\*.inf
+    @end example
+
+@noindent
+Find all @samp{*.exe} files under @samp{C:\Bin}
+
+    @example
+    [D:\] filefind C:\Bin\*.exe
+    @end example
+
+@noindent
+Find all @samp{*.inf} files under @samp{D:\OS2\DLL} and
+@samp{D:\os2\apps}---this demonstrates multiple command line arguments
+
+    @example
+    [D:\OS2] filefind DLL\*.inf apps\*.inf
+    @end example
+
+@node Warning, , FileFind examples, FileFind
+@section Warning
+
+@code{FileFind} displays file dates and times in the national format,
+which is found with a @code{SysIni()} call to @samp{os2.ini}. However,
+this seems to be causing troubles every now and then---sometimes
+@code{SysIni()} returns insane results, like @samp{0} as the date or time
+separator.  @b{If you are having problems with this}, remove all date and
+time formatting lines from the program, and change the following line:
+
+    @example
+    ok = SysFileTree(Word(find, i), files, "fst", "*--*-")
+    @end example
+
+@noindent
+to
+
+    @example
+    ok = SysFileTree(Word(find, i), files, "fs", "*--*-")
+    @end example
+
+@code{FileFind} will then display dates and times in the American formats
+(@samp{MM/DD/YY} and @samp{HH:MM@{am|pm@}}, respectively) which are
+insane but work fine.
+
+@node kill, ps, FileFind, Top
+@chapter @code{kill}---kill processes
+
+@code{kill}---kill processes by their process id's (PID).
+
+@menu
+* kill usage::
+* System requirements for kill:
+* Tips::
+@end menu
+
+@node kill usage, System requirements for kill, kill, kill
+@section @code{kill} usage
+
+    @example
+    [D:\] kill @var{PID} @dots{}
+    @end example
+
+Process id's are given in decimals, not hexadecimals. To get decimal
+process id's, use @code{ps} (@xref{ps}) instead of the OS/2 system
+utility @code{PSTAT} (well, actually @code{ps} runs @code{PSTAT}).
+
+@node System requirements for kill, Tips, kill usage, kill
+@section System requirements
+
+@code{kill} is a Perl program and requires you to have Perl installed.
+Perl is a programming language which originally was designed for
+UNIX (how else) but is now ported for many other operating systems.
+Perl should be find by anonymous FTP'ing to one of the following
+places:
+
+    @example
+    hobbes.nmsu.edu
+    ftp.cdrom.com
+    ftp.luth.se
+    ftp.informatik.tu-muenchen.de
+    ftp.urz.uni-heidelberg.de
+    @end example
+
+@noindent
+and possibly many others. Try directories like
+
+    @example
+    @dots{}/os2/2_x/programming                or
+    @dots{}/os2/2_x/unix/programming
+    @end example
+
+@noindent
+and search for files starting @samp{perl}.
+
+@node Tips, , System requirements for kill, kill
+@section Tips
+
+If you are using an aliasing shell like 4OS2, this script should be
+easy to convert to an alias. For example, when using 4OS2, put the
+line
+
+    @example
+    KILL=perl -e "kill(9, %$);"
+    @end example
+
+@noindent
+in your alias file, or type
+
+    @example
+    [D:\] alias kill=`perl -e "kill(9, %$);"`
+    @end example
+
+@noindent
+at the command line.
+
+I haven't yet figured out how command line can be passed to @code{sh}
+(ms_sh 2.1C). The easiest solution (using `$*') doesn't seem to
+work.
+
+@node ps, SOS Tree, kill, Top
+@chapter @code{ps}---process status
+
+@code{ps}---display processes with their process id's (PID),  parent
+process id's (PPID), and session id's (SID).
+
+@menu
+* ps usage::
+* System requirements for ps::
+* Implementation notes::
+@end menu
+
+@node ps usage, System requirements, ps, ps
+@section @code{ps} usage
+
+    @example
+    [D:\] ps
+    @end example
+
+@code{ps} output looks like this:
+
+    @example
+    PID  PPID   SID  PROCESS
+     3     1     1   d:\os2\pmshell.exe
+     7     3    18   d:\bin\pc2\pc2.exe
+     6     3    17   d:\bin\xfeel.exe
+     5     3    16   d:\os2\pmshell.exe
+     4     3     0   d:\os2\system\harderr.exe
+    @end example
+
+All the numeric values are decimals. If you want hexadecimals, just
+remove all calls to @code{Format()} and @code{X2D()} in lines 24--26 of
+@samp{ps.cmd}; ie. change
+
+    @example
+    pid = Format(X2D(Word(line, 1)), 4)
+    @end example
+
+@noindent
+to
+
+    @example
+    pid = Word(line, 1)
+    @end example
+
+You may have to reformat the header line to get the columns right.
+
+@node System requirements, Implementation notes, ps usage, ps
+@section System requirements
+
+@code{ps} is a REXX program and requires you to have REXX installed.
+Also, @code{ps} calls @code{PSTAT} to obtain the information, and only
+re-formats the output to a more readable and at least shorter format.
+@code{PSTAT} is part of the OS/2 Diagnostic Tools installation options;
+if you don't have the file @samp{pstat.exe} in your @samp{\OS2}
+directory, use the `Selective Install' object in your System folder to
+install it. REXX can be installed in the same way, in the unlikely case
+you haven't it installed already.
+
+@samp{rxqueue.exe} should also be found in the @samp{\OS2} directory. It
+is part of the REXX installation option.
+
+@node Implementation notes, , System requirements, ps
+@section Implementation notes
+
+It took a long while before I found out how to pipe output to REXX
+routines inside a REXX program. Maybe there are even better altern-
+atives than the @code{rxqueue} method this program uses, but none of them
+is documented in the standard OS/2 package. I really wish IBM would some
+day give a full, decent documentation @b{free} with the OS/2
+system@dots{}
+
+@node SOS Tree, Version and copyrights, ps, Top
+@chapter @code{SOS Tree}
+
+@code{SOS Tree}---directory tree drawer utility for OS/2.
+
+@menu
+* SOS Tree usage::
+* Note of re-compiling::
+@end menu
+
+@node SOS Tree usage, Note of re-compiling, SOS Tree, SOS Tree
+@section @code{SOS Tree} usage
+
+    @example
+    [D:\] sostree [ -adfnqz ] @var{PATH}
+    @end example
+
+@table @samp
+@item -a
+Display file attributes in the format @samp{ADHRS}
+@item -d
+Display dates and times too (in current national format).
+@item -f
+Include plain files too in the listing.
+@item -n
+List all directories (or all files and directories with -f option) with
+full path names; do not draw the tree graph.
+@item -q
+Don't display the @samp{Directory tree of @dots{}} header.
+@item -z
+Display file sizes too. This switch is meaningless if @samp{-f} isn't
+used simultaneously.
+@end table
+
+@node Note of re-compiling, , SOS Tree usage, SOS Tree
+@section Note of re-compiling SOS Tree
+
+I have tried to make SOS Tree as easy to be translated to other languages
+as possible, but without the IBM @code{mkmsgf} utility I'm forced to use
+different methods than the handy message file system OS/2 offers. However,
+it should still be easy to make other-language versions of the program.
+From version 1.0a onwards, after the standard @samp{.h} files have been
+included, there are conditional @code{#include} clauses (lines 24- in
+@samp{sostree.c}):
+
+    @example
+    #if defined(LANG_SUOMI)
+    #include "msg_suomi.inc"
+    @dots{}
+    #else
+    #include "msg_english.inc"      /* The default */
+    #endif
+    @end example
+
+To get the Finnish messages, compile with @samp{LANG_SUOMI} symbolic
+constant defined. For example, using Borland C++:
+
+    @example
+    [D:\] bcc -DLANG_SUOMI sostree.c
+    @end example
+
+To create a custom message file, examine @samp{msg_english.inc} or
+for an example, and then add an appropriate @code{#elsif} clause to
+@samp{sostree.c}:
+
+    @example
+    #if defined(LANG_SUOMI)
+    #include "msg_suomi.h"
+    #elsif defined(LANG_ESPERANTO)
+    #include "msg_esperanto.h"
+    @dots{}
+    #else
+    #include "msg_english.h"
+    #endif
+    @end example
+
+No other changes to @samp{sostree.c} are necessary. To compile this
+new version, you need to define @samp{LANG_ESPERANTO} constant in the
+command line of the compiler, of course.
+
+NOTE: please send your translations to me so that I can include them
+in the next `official' release of SOS Tree.
+
+@node Version and copyrights, , SOS Tree, Top
+@chapter Version and copyrights
+
+@noindent
+SOS Utilities version 1.2
+
+@noindent
+SOS Tree v1.0a---directory drawer@*
+ChName v1.1b---change names to/from FAT format@*
+Extract v1.1---archive extractor/lister@*
+FindFile v1.4a---file finder@*
+kill v1.0--kill process@*
+ps v4.0a---display process status@*
+Copyright @copyright{} 1993, SuperOscar Softwares, Tommi Nieminen.
+
+These programs are free software; you can redistribute them and/or modify
+them under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 1, or (at your option)
+any later version.
+
+These programs are distributed in the hope that they will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program package; if not, write to the Free Software
+Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+@bye
